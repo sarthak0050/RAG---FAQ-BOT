@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: groww-hdfc-faq-bot
+    runtime: python
+    repo: https://github.com/sarthak0050/RAG---FAQ-BOT.git
+    branch: main
+    plan: free
+    region: oregon
+    buildCommand: >-
+      pip install -r requirements.txt &&
+      python -c "from code.embedding.model import get_model; get_model()"
+    startCommand: >-
+      streamlit run code/ui/app.py
+      --server.port $PORT
+      --server.address 0.0.0.0
+      --server.headless true
+      --server.fileWatcherType none
+    healthCheckPath: /_stcore/health
+    envVars:
+      - key: MISTRAL_API_KEY
+        sync: false
+      - key: MISTRAL_MODEL
+        value: mistral-small-latest
+        sync: false
+      - key: HF_HUB_DISABLE_TELEMETRY
+        value: "1"
