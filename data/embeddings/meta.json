@@ -1,0 +1,8 @@
+{
+  "model": "sentence-transformers/all-MiniLM-L6-v2",
+  "count": 2395,
+  "dim": 384,
+  "normalized": true,
+  "chunk_ids_path": "ids.json",
+  "embeddings_path": "embeddings.npy"
+}

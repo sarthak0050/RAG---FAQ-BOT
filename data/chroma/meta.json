@@ -1,0 +1,8 @@
+{
+  "collection": "groww_hdfc_faq",
+  "space": "cosine",
+  "model": "sentence-transformers/all-MiniLM-L6-v2",
+  "count": 2395,
+  "dim": 384,
+  "ingested_at": "2026-08-30T06:25:53+00:00"
+}
