@@ -98,6 +98,7 @@ st.markdown(
 )
 
 st.markdown('<div class="groww-title">GROWW MUTUAL FUND FAQ BOT</div>', unsafe_allow_html=True)
+st.caption("deploy-v1", help="Deployment marker used to verify live instance runs the latest code.")
 st.markdown(f'<div class="groww-welcome">{WELCOME}</div>', unsafe_allow_html=True)
 st.markdown(
     f'<div class="groww-note">{DISCLAIMER} · Covers only: {_COVERED_FUNDS}</div>',
