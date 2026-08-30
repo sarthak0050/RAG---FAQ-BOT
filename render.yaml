@@ -10,7 +10,7 @@ services:
       pip install -r requirements.txt &&
       python -c "from code.embedding.model import get_model; get_model()"
     startCommand: >-
-      streamlit run code/ui/app.py
+      python3 -m code.ui
       --server.port $PORT
       --server.address 0.0.0.0
       --server.headless true
