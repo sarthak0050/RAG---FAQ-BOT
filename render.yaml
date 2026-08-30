@@ -7,8 +7,8 @@ services:
     plan: free
     region: oregon
     buildCommand: >-
-      pip install -r requirements.txt &&
-      python -c "from code.embedding.model import get_model; get_model()"
+      pip install torch --index-url https://download.pytorch.org/whl/cpu &&
+      pip install -r requirements.txt
     startCommand: >-
       python3 -m code.ui
       --server.port $PORT
