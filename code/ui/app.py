@@ -9,8 +9,6 @@ if str(repo_root) not in sys.path:
 
 import streamlit as st
 
-from code.retrieval.retriever import answer_question
-
 GROWW_GREEN = "#00D09C"
 GROWW_GREEN_DEEP = "#00A67B"
 GROWW_DARK = "#10161A"
@@ -79,6 +77,8 @@ if "messages" not in st.session_state:
 
 
 def _ask(question: str) -> dict:
+    from code.retrieval.retriever import answer_question
+
     with st.spinner("Searching the fund documents…"):
         return answer_question(question)
 
