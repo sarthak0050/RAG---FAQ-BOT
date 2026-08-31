@@ -391,14 +391,13 @@ a { color: var(--green); }
   background-size: 20px 20px;
 }
 [data-testid="stBaseButton-primary"]::after {
-  content: "\2197";
+  content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2300D09C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 11.5 11.5 4.5M6 4.5h5.5V10'/%3E%3C/svg%3E");
   position: absolute;
   top: 12px;
   right: 14px;
-  color: var(--green);
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1;
+  width: 14px;
+  height: 14px;
+  line-height: 0;
   opacity: 0;
   transform: translate(-3px, 3px);
   transition: opacity .16s ease, transform .16s ease;
