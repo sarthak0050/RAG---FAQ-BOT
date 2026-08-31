@@ -9,28 +9,26 @@ if str(repo_root) not in sys.path:
 
 import streamlit as st
 
-GROWW_GREEN = "#00D09C"
-GROWW_GREEN_DEEP = "#00A67B"
-GROWW_DARK = "#10161A"
-GROWW_DARKER = "#0B0F12"
-GROWW_TEXT = "#EDF2EF"
-GROWW_MUTED = "#8FA39A"
-
 EXAMPLES = (
-    "What is the expense ratio of HDFC Large Cap Fund Direct Growth?",
-    "What is the lock-in for HDFC ELSS Tax Saver?",
-    "What is the minimum SIP for HDFC Small Cap Fund Direct Growth?",
+    "What is the expense ratio of HDFC Large Cap?",
+    "What is the lock-in period for HDFC ELSS?",
+    "What is the minimum SIP for HDFC Small Cap?",
 )
 
 WELCOME = (
-    "Factual answers about HDFC Direct Growth funds, drawn directly from "
-    "each fund's official page. Every answer cites its source."
+    "Ask factual questions about selected HDFC mutual funds. Every answer is "
+    "grounded in the official fund information and includes a source."
 )
-DISCLAIMER = "Facts-only · Not investment advice"
+DISCLAIMER = "Not investment advice"
 _COVERED_FUNDS = (
-    "HDFC Large Cap · HDFC Flexi Cap · HDFC ELSS Tax Saver · "
-    "HDFC Small Cap · HDFC Balanced Advantage"
+    "HDFC Large Cap",
+    "HDFC Flexi Cap",
+    "HDFC ELSS Tax Saver",
+    "HDFC Small Cap",
+    "HDFC Balanced Advantage",
 )
+
+from code.ui import components as ui
 
 st.set_page_config(
     page_title="Groww Mutual Fund FAQ Bot",
@@ -39,38 +37,10 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-st.html(
-    f"""
-    <style>
-      .brand-row {{ display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }}
-      .brand-mark {{ flex: 0 0 auto; width: 46px; height: 46px; border-radius: 14px;
-        background: linear-gradient(135deg, {GROWW_GREEN}, {GROWW_GREEN_DEEP});
-        display: flex; align-items: center; justify-content: center;
-        box-shadow: 0 6px 20px rgba(0, 208, 156, 0.25); }}
-      .brand-title {{ font-size: 26px; font-weight: 800; letter-spacing: 0.6px;
-        color: {GROWW_GREEN}; line-height: 1.15; margin: 0; }}
-      .brand-sub {{ margin-top: 4px; color: {GROWW_MUTED}; font-size: 13px;
-        font-weight: 500; letter-spacing: 0.3px; }}
-    </style>
-    <div class="brand-row">
-      <div class="brand-mark">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-          <path d="M4 20V4" stroke="#0B0F12" stroke-width="2.4" stroke-linecap="round"/>
-          <path d="M4 16l6-4 4 2 6-7" stroke="#0B0F12" stroke-width="2.4"
-                stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="17" cy="9" r="2.2" fill="#0B0F12"/>
-        </svg>
-      </div>
-      <div>
-        <div class="brand-title">GROWW <span style="color:{GROWW_MUTED};">MUTUAL FUND FAQ BOT</span></div>
-        <div class="brand-sub">HDFC Direct Growth &mdash; facts, with sources</div>
-      </div>
-    </div>
-    """
-)
-
-st.markdown(WELCOME)
-st.markdown(f"*{DISCLAIMER}* · **Covers:** {_COVERED_FUNDS}")
+ui.render_styles()
+ui.render_header()
+ui.render_hero()
+ui.render_fund_chips(_COVERED_FUNDS)
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -79,26 +49,37 @@ if "messages" not in st.session_state:
 def _ask(question: str) -> dict:
     from code.retrieval.retriever import answer_question
 
-    with st.spinner("Searching the fund documents…"):
-        return answer_question(question)
+    return answer_question(question)
+
+
+def _run_question(question: str) -> None:
+    st.session_state.messages.append({"role": "user", "content": question})
+    stage = st.empty()
+    with stage.container():
+        with st.chat_message("assistant"):
+            st.html(ui.typing_indicator())
+    result = _ask(question)
+    stage.empty()
+    st.session_state.messages.append({"role": "assistant", "result": result})
 
 
 def render_answer(result: dict) -> None:
     if result.get("warning"):
-        st.warning(result["warning"])
+        st.html(ui.warning_chip(result["warning"]))
 
     if not result.get("generation_error"):
-        st.markdown(result["answer"])
+        st.markdown(ui.emphasize_numbers(result["answer"]), unsafe_allow_html=True)
     else:
         st.info(
             "Answer generation is off — set MISTRAL_API_KEY in `.env` to enable "
             "Mistral. Retrieval still ran (results below)."
         )
 
-    if result.get("source_url"):
-        st.markdown(f"**Source:** [{result['source_url']}]({result['source_url']})")
+    sources_html = ui.sources(result)
+    if sources_html:
+        st.html(sources_html)
     if result.get("last_updated"):
-        st.markdown(f"*Last updated from sources: {result['last_updated']}*")
+        st.html(ui.updated_note(result["last_updated"]))
 
     if result.get("retrieved"):
         with st.expander("Retrieved chunks (debug)"):
@@ -111,32 +92,32 @@ def render_answer(result: dict) -> None:
 
 def render_message(message: dict) -> None:
     if message["role"] == "user":
-        st.chat_message("user", avatar="🙂").markdown(message["content"])
+        st.chat_message("user").markdown(message["content"])
     else:
-        with st.chat_message("assistant", avatar="📈"):
+        with st.chat_message("assistant"):
             render_answer(message["result"])
-
-
-def handle(question: str) -> None:
-    st.session_state.messages.append({"role": "user", "content": question})
-    result = _ask(question)
-    st.session_state.messages.append({"role": "assistant", "result": result})
-    render_message(st.session_state.messages[-2])
-    render_message(st.session_state.messages[-1])
 
 
 for message in st.session_state.messages:
     render_message(message)
 
-cols = st.columns(len(EXAMPLES))
-for col, example in zip(cols, EXAMPLES):
-    if col.button(example, use_container_width=True):
-        handle(example)
+if st.session_state.messages:
+    chosen = ui.render_chat_prompts(EXAMPLES)
+else:
+    ui.render_empty_state()
+    chosen = ui.render_suggestion_cards(EXAMPLES)
 
-prompt = st.chat_input("Ask a factual question about an HDFC fund…")
+if chosen:
+    _run_question(chosen)
+    render_message(st.session_state.messages[-2])
+    render_message(st.session_state.messages[-1])
+
+ui.input_helper(DISCLAIMER)
+
+prompt = st.chat_input("Ask anything about these mutual funds…")
 if prompt:
-    handle(prompt)
+    _run_question(prompt)
+    render_message(st.session_state.messages[-2])
+    render_message(st.session_state.messages[-1])
 
-st.markdown(
-    f"Powered by Groww, embeddings & Mistral · Facts-only, sourced from fund pages · {DISCLAIMER}"
-)
+ui.render_footer()
