@@ -114,7 +114,7 @@ if chosen:
 
 ui.input_helper(DISCLAIMER)
 
-prompt = st.chat_input("Ask anything about these mutual funds…")
+prompt = st.chat_input("Ask about these mutual funds…")
 if prompt:
     _run_question(prompt)
     render_message(st.session_state.messages[-2])

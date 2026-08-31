@@ -678,13 +678,6 @@ a { color: var(--green); }
   border: none !important;
   background: transparent !important;
   box-shadow: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  height: auto !important;
-  min-height: 0 !important;
-  max-height: none !important;
-  align-items: center !important;
-  flex-direction: row !important;
 }
 [data-testid="stChatInput"] {
   position: sticky;
@@ -703,7 +696,7 @@ a { color: var(--green); }
   backdrop-filter: blur(18px);
   border: 1px solid rgba(0,208,156,0.22);
   border-radius: 17px;
-  padding: 10px 10px 10px 18px;
+  padding: 6px 8px 6px 16px;
   box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,208,156,0.04);
   transition: border-color .18s ease, box-shadow .18s ease;
 }
@@ -720,6 +713,40 @@ a { color: var(--green); }
   opacity: 0.9;
   pointer-events: none;
 }
+[data-testid="stChatInput"] > div {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 !important;
+}
+[data-testid="stChatInput"] > div > div {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 !important;
+}
+[data-testid="stChatInput"] > div > div > div:first-child {
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  width: auto !important;
+  align-items: center;
+  overflow: hidden;
+}
+[data-testid="stChatInput"] > div > div > div:last-child {
+  flex: 0 0 auto !important;
+  min-width: 0 !important;
+  max-width: 60px !important;
+  width: auto !important;
+  display: flex;
+  align-items: center;
+  column-gap: 4px;
+  overflow: hidden;
+}
 [data-testid="stChatInputTextArea"] {
   background: transparent !important;
   border: none !important;
@@ -732,14 +759,18 @@ a { color: var(--green); }
   text-align: left !important;
   padding: 7px 4px 7px 0 !important;
   margin: 0 !important;
+  width: 100% !important;
+  height: auto !important;
   min-height: 22px !important;
   max-height: 120px !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  display: inline-block;
   overflow-y: auto !important;
+  overflow-x: hidden !important;
   resize: none !important;
-  flex: 1 1 auto;
-  align-self: stretch !important;
-  display: flex;
-  align-items: center;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
 }
 [data-testid="stChatInputTextArea"]::placeholder {
   color: #74867E !important;
