@@ -1,0 +1,31 @@
+{
+  "refreshed_at": "2026-09-30T10:42:59+00:00",
+  "changed": [
+    "hdfc-large-cap-fund-direct-growth",
+    "hdfc-equity-fund-direct-growth",
+    "hdfc-elss-tax-saver-fund-direct-plan-growth",
+    "hdfc-small-cap-fund-direct-growth",
+    "hdfc-balanced-advantage-fund-direct-growth"
+  ],
+  "rebuilt": true,
+  "stages": {
+    "loading": {
+      "ok": true,
+      "documents": 5
+    },
+    "chunking": {
+      "ok": true,
+      "chunks": 2831
+    },
+    "embedding": {
+      "ok": true,
+      "count": 2831,
+      "dim": 384
+    },
+    "vector_store": {
+      "ok": true,
+      "count": 2831,
+      "collection": "groww_hdfc_faq"
+    }
+  }
+}

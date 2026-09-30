@@ -1,0 +1,58 @@
+name: Refresh FAQ Corpus
+
+# Keeps the retrieval index grounded on the current official Groww fund pages.
+# - Runs weekly (Mon 06:00 UTC) and on demand via "Run workflow".
+# - Re-fetches the five pages, compares extracted text, and rebuilds the corpus
+#   (raw -> chunks -> embeddings -> ChromaDB) ONLY when a page actually changed.
+# - Commits the refreshed data back to main when the content changed.
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: corpus-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        env:
+          HF_HUB_DISABLE_TELEMETRY: "1"
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements.txt
+
+      - name: Run scheduler (rebuild only when pages changed)
+        env:
+          HF_HUB_DISABLE_TELEMETRY: "1"
+        run: python3 -m code.scheduler --mode once
+
+      - name: Commit refreshed corpus if changed
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add --all
+            git commit -m "chore(corpus): refresh fund pages on $(date -u +%Y-%m-%d)"
+            git push origin main
+            echo "Corpus refreshed and committed."
+          else
+            echo "No source changes detected; corpus is up to date."
+          fi
