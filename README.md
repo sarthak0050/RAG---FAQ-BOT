@@ -278,12 +278,32 @@ All configuration is environment-based.
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
 | `MISTRAL_API_KEY` | Yes (for answers) | — | Mistral ask path |
-| `MISTRAL_MODEL` | No | `mistral-small-latest` | Generation model |
+| `MISTRAL_MODEL` | No | `mistral-small-latest` | Preferred generation model |
 | `REFRESH_INTERVAL_HOURS` | No | 24 | Scheduler daemon interval (CLI flag overrides) |
 
 - **Local:** copy `.env.example` → `.env` (`python-dotenv` loads it).
-- **Hugging Face Spaces:** set Space *secrets* (not just env vars).
+- **Streamlit Cloud / Hugging Face Spaces:** set *Secrets*. The app reads them
+  via `st.secrets` as well as `os.environ` (see `code.generation.mistral.read_secret`),
+  because hosted platforms expose dashboard secrets through `st.secrets` only —
+  an environment-only lookup silently disables answer generation in the cloud.
 - **Render:** declared in `render.yaml` (`sync: false` → set in dashboard).
+
+### Model fallbacks and rate limits
+
+Mistral quotas are **per model**, so one key can be rate-limited on
+`mistral-small-latest` while serving `ministral-8b-latest` normally. The ask
+path therefore:
+
+1. calls `MISTRAL_MODEL` (one retry, then moves on), then
+2. falls back to `ministral-8b-latest`, then `mistral-tiny-latest`.
+
+Transient `5xx` gets up to 3 attempts with exponential backoff. `401`/`403` stops
+immediately — no other model can fix a bad key. If every model is exhausted the
+error names each model and its status, so the fix is usually "point
+`MISTRAL_MODEL` at a model this key has quota for".
+
+> Check which models your key can actually use:
+> `curl -s https://api.mistral.ai/v1/models -H "Authorization: Bearer $MISTRAL_API_KEY" | jq -r '.data[].id'`
 
 ## Deployment
 
@@ -308,6 +328,23 @@ the Render dashboard.
 
 Uses the top-level `streamlit_app.py` shim, which delegates to
 `code/ui/app.py`. Works with a connected GitHub repo.
+
+**Required:** add the secret, or answer generation stays off.
+
+1. Open your app on share.streamlit.io → **Settings → Secrets**
+2. Paste a TOML block (the value needs quotes):
+
+   ```toml
+   MISTRAL_API_KEY = "your-key-here"
+   # optional, if mistral-small-latest is rate-limited for your key:
+   # MISTRAL_MODEL = "ministral-8b-latest"
+   ```
+
+3. **Save**, then **Deploy → Redeploy** (secrets are injected at container start,
+   so a redeploy is required — saving alone will not take effect).
+
+The UI reports the exact state if something is missing: it distinguishes "no key
+found" (secret not set) from "every model rate-limited" (key set, no quota).
 
 ## Guardrails & Responsible AI
 
@@ -356,6 +393,17 @@ python3 -m code.retrieval
 
 > The documented gold-set assertions live under `tests/retrieval/` and are
 > maintained alongside the PRD acceptance criteria (FR-6).
+
+### Unit tests
+
+Generation logic is covered by stdlib `unittest` (no pytest dependency):
+
+```bash
+python3 -m unittest discover -s tests -t .
+```
+
+Covers `read_secret` (env → `st.secrets` → absent), model fallback on 429,
+retry/backoff on 5xx, no-retry on 401, and the all-models-exhausted error.
 
 ## Documentation
 

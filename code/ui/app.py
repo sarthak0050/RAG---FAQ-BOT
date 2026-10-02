@@ -71,8 +71,12 @@ def render_answer(result: dict) -> None:
         st.markdown(ui.emphasize_numbers(result["answer"]), unsafe_allow_html=True)
     else:
         st.info(
-            "Answer generation is off — set MISTRAL_API_KEY in `.env` to enable "
-            "Mistral. Retrieval still ran (results below)."
+            "Answer generation is off — no `MISTRAL_API_KEY` found. Retrieval still "
+            "ran (results below). Set it where you are running this app:\n\n"
+            "- **Streamlit Cloud / HF Spaces**: Settings → Secrets, add "
+            "`MISTRAL_API_KEY`, then redeploy.\n"
+            "- **Local**: put `MISTRAL_API_KEY=...` in `.env` at the repo root "
+            "(see `.env.example`), then restart."
         )
 
     sources_html = ui.sources(result)
