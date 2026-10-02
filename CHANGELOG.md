@@ -5,6 +5,8 @@
 
 ## Full history (no tag, fewer than 30 commits)
 
+- 2026-10-02 `42852ea` ci: attribute automated commits to the repo owner when PAT_TOKEN is set
+- 2026-10-02 `477e09f` docs: add weekly changelog automation and initial CHANGELOG.md
 - 2026-10-02 `27b4c95` ci: stagger weekly scheduler to avoid top-of-hour congestion
 - 2026-10-02 `1766dd3` chore(corpus): refresh fund pages on 2026-10-02
 - 2026-09-30 `cf87f6b` Add corpus-refresh scheduler, GH Actions cron, and elaborate README
