@@ -265,7 +265,7 @@ Exit codes: `0` ok/fresh, `1` failed, `2` check-mode with changes available.
 
 ### Automated weekly refresh (GitHub Actions)
 
-`.github/workflows/refresh-corpus.yml` runs **every Monday 06:00 UTC** (and on
+`.github/workflows/refresh-corpus.yml` runs **every Monday 06:17 UTC** (and on
 manual `Run workflow`): it installs dependencies, runs
 `python3 -m code.scheduler --mode once`, and commits the refreshed
 `data/` back to `main` **only if a page changed**. A rebuilt run also writes
