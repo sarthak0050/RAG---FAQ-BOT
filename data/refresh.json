@@ -1,5 +1,5 @@
 {
-  "refreshed_at": "2026-09-30T10:42:59+00:00",
+  "refreshed_at": "2026-10-02T07:18:08+00:00",
   "changed": [
     "hdfc-large-cap-fund-direct-growth",
     "hdfc-equity-fund-direct-growth",
@@ -15,16 +15,16 @@
     },
     "chunking": {
       "ok": true,
-      "chunks": 2831
+      "chunks": 2839
     },
     "embedding": {
       "ok": true,
-      "count": 2831,
+      "count": 2839,
       "dim": 384
     },
     "vector_store": {
       "ok": true,
-      "count": 2831,
+      "count": 2839,
       "collection": "groww_hdfc_faq"
     }
   }
