@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -20,11 +21,36 @@ class VectorStoreError(RuntimeError):
     pass
 
 
+_clients: dict[str, chromadb.api.ClientAPI] = {}
+_clients_lock = threading.Lock()
+
+
 def get_client(db_dir: Path | None = None) -> chromadb.api.ClientAPI:
-    """Persistent ChromaDB client rooted at data/chroma."""
-    dest = db_dir or DATA_CHROMA
-    dest.mkdir(parents=True, exist_ok=True)
-    return chromadb.PersistentClient(path=str(dest))
+    """Persistent ChromaDB client rooted at data/chroma, memoized per path.
+
+    Constructing a PersistentClient re-opens the underlying store and is far too
+    expensive to repeat on every query, and the UI calls this once per question.
+    Clients are cached per resolved path so tests can still pass an isolated
+    db_dir without colliding with the default store.
+    """
+    dest = (db_dir or DATA_CHROMA).resolve()
+    key = str(dest)
+    cached = _clients.get(key)
+    if cached is not None:
+        return cached
+    with _clients_lock:
+        cached = _clients.get(key)
+        if cached is None:
+            dest.mkdir(parents=True, exist_ok=True)
+            cached = chromadb.PersistentClient(path=str(dest))
+            _clients[key] = cached
+    return cached
+
+
+def reset_client_cache() -> None:
+    """Drop memoized clients (used by tests and by index rebuilds)."""
+    with _clients_lock:
+        _clients.clear()
 
 
 def get_collection(

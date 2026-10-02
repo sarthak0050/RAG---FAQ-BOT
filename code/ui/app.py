@@ -29,6 +29,23 @@ _COVERED_FUNDS = (
 )
 
 from code.ui import components as ui
+from code.ui import session_store, warmup
+
+# Wake the heavy resources (torch import, MiniLM weights, Chroma store) on a
+# background thread while this first render is being sent to the browser.
+warmup.warm_async()
+
+# A sleeping Streamlit app hands the browser a fresh session, so st.session_state
+# starts empty and the conversation is lost. Carry a session id in the URL and keep
+# the transcript on disk, keyed by it.
+if "session_id" not in st.session_state:
+    existing = st.query_params.get("session", "")
+    st.session_state.session_id = existing or session_store.new_session_id()
+    if not existing:
+        st.query_params["session"] = st.session_state.session_id
+
+if "messages" not in st.session_state:
+    st.session_state.messages = session_store.load(st.session_state.session_id)
 
 st.set_page_config(
     page_title="Groww Mutual Fund FAQ Bot",
@@ -42,8 +59,15 @@ ui.render_header()
 ui.render_hero()
 ui.render_fund_chips(_COVERED_FUNDS)
 
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+if not warmup.is_ready():
+    st.caption(
+        "Warming up the search index — this only happens right after the app "
+        "wakes from sleep. The first answer can take a few seconds longer."
+    )
+
+
+def _persist() -> None:
+    session_store.save(st.session_state.session_id, st.session_state.messages)
 
 
 def _ask(question: str) -> dict:
@@ -54,6 +78,7 @@ def _ask(question: str) -> dict:
 
 def _run_question(question: str) -> None:
     st.session_state.messages.append({"role": "user", "content": question})
+    _persist()
     stage = st.empty()
     with stage.container():
         with st.chat_message("assistant"):
@@ -61,6 +86,7 @@ def _run_question(question: str) -> None:
     result = _ask(question)
     stage.empty()
     st.session_state.messages.append({"role": "assistant", "result": result})
+    _persist()
 
 
 def render_answer(result: dict) -> None:

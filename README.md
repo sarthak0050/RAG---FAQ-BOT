@@ -173,10 +173,16 @@ dedupe → top-k(5) → Mistral (grounded) → answer + citation + last-updated`
 │   ├── generation/    # Mistral grounded generation
 │   ├── scheduler/     # corpus-refresh scheduler (once/check/daemon)
 │   ├── ui/            # Streamlit app + components
+│   │   ├── app.py     # page: chat UI, warm-up trigger, session wiring
+│   │   ├── warmup.py  # loads MiniLM + Chroma on a background thread
+│   │   └── session_store.py  # transcript kept across sleep/wake
 │   └── paths.py       # canonical data-path constants
 ├── data/              # raw / chunks / embeddings / chroma (git-tracked)
 ├── docs/              # PRD, architecture, problem statement
-├── tests/retrieval/   # gold-set retrieval tests (documented in PRD FR-6)
+├── tests/
+│   ├── generation/    # Mistral secret resolution, fallback, retry
+│   ├── ui/            # warm-up, Chroma reuse, transcript, app smoke test
+│   └── retrieval/     # gold-set retrieval tests (documented in PRD FR-6)
 ├── .env.example       # copy to .env and fill MISTRAL_API_KEY
 ├── requirements.txt
 ├── render.yaml        # Render blueprint (free tier)
@@ -345,6 +351,43 @@ Uses the top-level `streamlit_app.py` shim, which delegates to
 
 The UI reports the exact state if something is missing: it distinguishes "no key
 found" (secret not set) from "every model rate-limited" (key set, no quota).
+
+#### Sleep & wake-up
+
+Community Cloud's free tier **sleeps idle apps**. That is a platform behaviour and
+cannot be disabled from the app, but its cost is now small — measured locally on
+the same corpus:
+
+| | Before | After |
+|---|---|---|
+| First answer after a cold start | 10.05s | 3.18s |
+| Warm answers | 2.8–4.1s | 2.8–4.1s |
+
+What changed:
+
+- **Background warm-up** (`code/ui/warmup.py`). Importing torch/sentence-transformers
+  (~9s) and opening the Chroma store used to happen on the first question. A single
+  background thread now does it while the first render is being sent, finishing in
+  ~10s of background load, so a user who takes more than a few seconds to type gets
+  a warm answer. Single-flight guarded — Streamlit reruns the script on every click,
+  and each rerun must not start another loader.
+- **Memoized Chroma client** (`code/vector_store/store.py`). `get_client()` built a
+  brand new `PersistentClient` on *every* query, re-opening the store each time.
+  Clients are now cached per resolved path.
+- **Thread-safe model load** (`code/embedding/model.py`). Double-checked locking, so
+  a question arriving mid-warm-up waits for the in-flight load instead of starting a
+  second one.
+- **Transcript survives the wake.** A woken app is a brand new browser session, so
+  `st.session_state` starts empty and the conversation used to vanish. The transcript
+  is now kept in a small JSON file in the system temp dir, keyed by a session id in
+  the `?session=` query param. It deliberately lives outside the repo so no workflow
+  can commit it, is capped at 40 turns, and prunes stale sessions.
+- **Honest warm-up state.** While the index is still loading, the page shows a
+  caption explaining the first answer will be slower, instead of appearing to hang.
+
+To keep the app permanently warm you need something outside the app — an uptime
+monitor that polls it (only works if the app is publicly reachable) or a host with a
+longer idle timeout. Both are platform/host decisions rather than code changes.
 
 ## Guardrails & Responsible AI
 
