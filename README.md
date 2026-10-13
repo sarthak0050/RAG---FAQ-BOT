@@ -22,7 +22,7 @@ product discipline of a PRD behind it: a deliberate, narrow scope so the
 factuality and safety guardrails stay enforceable.
 
 > **Live demo:** hosted on Hugging Face Spaces
-> ([open the Space](https://huggingface.co/spaces/YOUR_SPACE_NAME) — set the
+> ([open the Space](https://groww-rag-faq-bot.streamlit.app/) — set the
 > `MISTRAL_API_KEY` secret to run it).
 
 ---
